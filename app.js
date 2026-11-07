@@ -295,7 +295,6 @@
     var h = '#/p/' + p.id;
     if (hist === 'push') { history.pushState({ v: 1 }, '', h); pushed = true; } else history.replaceState({ v: 1 }, '', h);
     updateMeta();
-    V.img.style.aspectRatio = p.w + '/' + p.h;
     // show the thumbnail instantly, then swap in the sharp preview
     if (thumbURL[p.id]) V.img.src = thumbURL[p.id]; else V.img.removeAttribute('src');
     V.spin.hidden = false;

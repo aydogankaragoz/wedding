@@ -40,7 +40,7 @@
   function mb(n) { return (n / 1048576).toFixed(1) + ' MB'; }
 
   var subtle = window.crypto && window.crypto.subtle;
-  var KEY = null, CFG = null, M = null;
+  var KEY = null, CFG = null, M = null, cfgReady = null;
   var photos = [];          // flat list in display order
   var favs = {};
   try { favs = JSON.parse(store('favs') || '{}'); } catch (e) {}
@@ -74,8 +74,8 @@
   function init() {
     applyLang();
     if (!subtle || !window.fetch) { msg(t('unsupported'), true); $('#unlockBtn').disabled = true; return; }
-    fetch('data/config.json').then(function (r) { return r.json(); }).then(function (c) {
-      CFG = c;
+    cfgReady = fetch('data/config.json').then(function (r) { return r.json(); }).then(function (c) { CFG = c; return c; });
+    cfgReady.then(function () {
       var saved = store('key_' + CFG.salt);
       if (!saved) return;
       return subtle.importKey('raw', unb64(saved), 'AES-GCM', true, ['decrypt'])
@@ -85,9 +85,8 @@
 
     $('#lockForm').addEventListener('submit', function (e) {
       e.preventDefault();
-      if (!CFG) return;
       var btn = $('#unlockBtn'); btn.disabled = true; msg(t('opening'));
-      deriveKey($('#pw').value).then(function (key) {
+      cfgReady.then(function () { return deriveKey($('#pw').value); }).then(function (key) {
         return openWith(key).then(function (m) {
           if ($('#remember').checked) {
             subtle.exportKey('raw', key).then(function (raw) { store('key_' + CFG.salt, b64(raw)); });
